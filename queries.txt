@@ -1,0 +1,44 @@
+query {
+  courses {
+    name
+    price
+  }
+}
+
+mutation($input: String){
+  addCourse(name: $input){
+    name
+    price
+  }
+}
+
+{"name": "Vue"}
+
+mutation($input: AddCourseInput){
+  addCourse(input: $input){
+    name
+    price
+  }
+}
+
+{"input":{"name": "Vue", "price": 15}}
+
+
+mutation($input: UpdateCourseInput){
+  updateCourse(input: $input){
+    name
+    price
+  }
+}
+
+
+{"input":{"name": "Vue", "price": 1}}
+
+mutation($name: String){
+  deleteCourse(name: $name){
+    name
+    price
+  }
+}
+
+{"name": "Vue"}

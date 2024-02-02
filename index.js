@@ -1,4 +1,5 @@
 const { ApolloServer, gql } = require("apollo-server");
+const { query } = require("./db");
 
 const courses = [
   { name: "Graph", price: 10 },
@@ -30,7 +31,7 @@ const typeDefs = gql`
 
   type Mutation {
     addCourse(input: AddCourseInput): Course
-    deleteCourse(name: String): [Course]
+    deleteCourse(name: String): Boolean
     updateCourse(input: UpdateCourseInput): Course
   }
 `;
@@ -40,19 +41,22 @@ const resolvers = {
     welcome: (_, __, context) => {
       return `Welcome to ${context.country}`;
     },
-    course: (parent, args, { courses }) => {
-      return courses.find((c) => c.name === args.name);
+    course: async (_, { name }) => {
+      return (await query(`SELECT * from courses WHERE name="${name}"`))[0];
     },
-    courses: (_, __, { courses }) => {
-      return courses;
+    courses: async () => {
+      return await query(`SELECT * from courses`);
     },
   },
   Mutation: {
-    addCourse: (parent, { input: { name, price } }, { courses }) => {
+    addCourse: async (_, { input: { name, price } }) => {
       console.log("Creating", name);
-      console.log({ name, price });
-      courses.push({ name, price });
-      return { name, price };
+      const newCourse = { name, price };
+      await query(
+        `INSERT INTO courses (name, price) VALUES ('${name}', ${price})`
+      );
+
+      return newCourse;
     },
 
     updateCourse: (parent, { input: { name, price } }, { courses }) => {
@@ -61,11 +65,10 @@ const resolvers = {
       courseToUpdate.price = price;
       return courseToUpdate;
     },
-    deleteCourse: (parent, { name }, { courses }) => {
+    deleteCourse: (parent, { name }) => {
       console.log("Deleting", name);
-      courses = courses.filter((course) => course.name !== name);
-      courses.pop();
-      return courses;
+      query(`DELETE FROM courses WHERE name="${name}"`);
+      return true;
     },
   },
 };
